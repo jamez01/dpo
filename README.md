@@ -15,7 +15,7 @@ dpo <pid>
 
 Output:
 
-``bash
+```bash
 stack       service  name
 monitoring  grafana  /grafana
 ```
