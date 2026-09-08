@@ -1,0 +1,28 @@
+#!/bin/bash
+DPID=$1
+
+if [[ ! -d /proc/$DPID ]]; then
+    echo "PID does not exist"
+    exit 1
+fi
+
+DCONT=$(sed -nE 's#.*docker-([0-9a-f]{64})\.scope.*#\1#p' /proc/"$DPID"/cgroup)
+
+if [[ ! "$DCONT" =~ ^[0-9a-f]{64}$ ]]; then
+    echo "Process is not inside a Docker container"
+    exit 1
+fi
+
+{
+  printf 'stack\tservice\tname\n'
+  docker inspect "$DCONT" |
+    jq -r '
+      .[0] |
+      [
+        .Config.Labels["com.docker.compose.project"] // "-",
+        .Config.Labels["com.docker.compose.service"] // "-",
+        .Name
+      ] |
+      @tsv
+    '
+} | column -t -s $'\t'
